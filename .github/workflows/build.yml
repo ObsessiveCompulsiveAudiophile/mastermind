@@ -84,7 +84,7 @@ jobs:
     - name: Install CUDA toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '12.6.0'
+        cuda: '12.5.0'
         method: 'local'
     
     - name: Compile CUDA program
