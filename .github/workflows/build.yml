@@ -84,12 +84,12 @@ jobs:
     - name: Install CUDA toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '11.8.0'
+        cuda: '12.6.0'
         method: 'local'
     
     - name: Compile CUDA program
       run: |
-        nvcc -allow-unsupported-compiler -o mastermind_cuda_windows.exe kernel.cu
+        nvcc -o mastermind_cuda_windows.exe kernel.cu
     
     - name: Compile C++ programs
       run: |
