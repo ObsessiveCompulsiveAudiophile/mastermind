@@ -1,1 +1,1 @@
-# nastermind
+# MasterMind
