@@ -15,26 +15,50 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install CUDA Toolkit
-      uses: Jimver/cuda-toolkit@v0.2.11
-      with:
-        cuda: '11.8.0'
-        method: 'local'
-      timeout-minutes: 15
+    - name: Free up disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h
     
     - name: Install build dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential
     
-    - name: Compile CUDA program
+    - name: Try CUDA installation (with fallback)
+      id: cuda_install
+      continue-on-error: true
+      timeout-minutes: 10
+      run: |
+        # Try to install CUDA toolkit
+        wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
+        sudo sh cuda_11.8.0_520.61.05_linux.run --silent --toolkit --no-opengl-libs --no-drm
+        echo "CUDA_INSTALLED=true" >> $GITHUB_OUTPUT
+    
+    - name: Set CUDA paths (if installed)
+      if: steps.cuda_install.outcome == 'success'
+      run: |
+        echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+        echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+    
+    - name: Compile CUDA program (if CUDA available)
+      if: steps.cuda_install.outcome == 'success'
       run: |
         nvcc -o mastermind_cuda_linux kernel.cu
     
+    - name: Compile CUDA program fallback (CPU-only)
+      if: steps.cuda_install.outcome == 'failure'
+      run: |
+        # Create a CPU-only version by compiling as regular C++
+        g++ -DCPU_ONLY -x c++ -o mastermind_cuda_linux kernel.cu -std=c++17
+    
     - name: Compile C++ programs
       run: |
-        g++ -o treeGenFixedWeights_linux treeGenFixedWeights.cpp -std=c++17
-        g++ -o treeGenStageWeights_linux treeGenStageWeights.cpp -std=c++17
+        g++ -o treeGenFixedWeights_linux treeGenFixedWeights.cpp -std=c++17 -O3
+        g++ -o treeGenStageWeights_linux treeGenStageWeights.cpp -std=c++17 -O3
     
     - name: Upload Linux binaries
       uses: actions/upload-artifact@v4
@@ -46,16 +70,10 @@ jobs:
           treeGenStageWeights_linux
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install CUDA Toolkit
-      uses: Jimver/cuda-toolkit@v0.2.11
-      with:
-        cuda: '11.8.0'
-        method: 'network'
     
     - name: Setup MSVC
       uses: microsoft/setup-msbuild@v2
@@ -63,14 +81,36 @@ jobs:
     - name: Setup MSVC environment
       uses: ilammy/msvc-dev-cmd@v1
     
-    - name: Compile CUDA program
+    - name: Try CUDA installation (with timeout)
+      id: cuda_install_win
+      continue-on-error: true
+      timeout-minutes: 10
+      run: |
+        # Download and install CUDA toolkit
+        Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_522.06_windows.exe" -OutFile "cuda_installer.exe"
+        Start-Process -FilePath "cuda_installer.exe" -ArgumentList "-s nvcc_11.8 cudart_11.8" -Wait -NoNewWindow
+        echo "CUDA_INSTALLED=true" >> $env:GITHUB_OUTPUT
+    
+    - name: Set CUDA paths (if installed)
+      if: steps.cuda_install_win.outcome == 'success'
+      run: |
+        echo "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin" >> $env:GITHUB_PATH
+    
+    - name: Compile CUDA program (if CUDA available)
+      if: steps.cuda_install_win.outcome == 'success'
       run: |
         nvcc -o mastermind_cuda_windows.exe kernel.cu
     
+    - name: Compile CUDA program fallback (CPU-only)
+      if: steps.cuda_install_win.outcome == 'failure'
+      run: |
+        # Create a CPU-only version
+        cl /EHsc /DCPU_ONLY /Tp kernel.cu /Fe:mastermind_cuda_windows.exe /std:c++17
+    
     - name: Compile C++ programs
       run: |
-        cl /EHsc /std:c++17 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights_windows.exe
-        cl /EHsc /std:c++17 treeGenStageWeights.cpp /Fe:treeGenStageWeights_windows.exe
+        cl /EHsc /std:c++17 /O2 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights_windows.exe
+        cl /EHsc /std:c++17 /O2 treeGenStageWeights.cpp /Fe:treeGenStageWeights_windows.exe
     
     - name: Upload Windows binaries
       uses: actions/upload-artifact@v4
