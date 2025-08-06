@@ -87,7 +87,6 @@ jobs:
     - name: Compile CUDA program
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nvcc -arch=sm_52 -o mastermind_cuda_windows.exe kernel.cu
   
     - name: Compile C++ programs
