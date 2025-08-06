@@ -44,14 +44,22 @@ jobs:
         echo "/usr/local/cuda/bin" >> $GITHUB_PATH
         echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH" >> $GITHUB_ENV
     
-    - name: Setup MSVC environment
-      uses: ilammy/msvc-dev-cmd@v1
-  
-    - name: Compile CUDA program
-      shell: cmd
+    - name: Compile CUDA program (if CUDA available)
+      if: steps.cuda_install.outcome == 'success'
       run: |
-        nvcc -arch=sm_52 -o mastermind_cuda_windows.exe kernel.cu
-
+        nvcc -o mastermind_cuda_linux kernel.cu
+    
+    - name: Compile CUDA program fallback (CPU-only)
+      if: steps.cuda_install.outcome == 'failure'
+      run: |
+        # Create a CPU-only version by compiling as regular C++
+        g++ -DCPU_ONLY -x c++ -o mastermind_cuda_linux kernel.cu -std=c++17
+    
+    - name: Compile C++ programs
+      run: |
+        g++ -o treeGenFixedWeights_linux treeGenFixedWeights.cpp -std=c++17 -O3
+        g++ -o treeGenStageWeights_linux treeGenStageWeights.cpp -std=c++17 -O3
+    
     - name: Upload Linux binaries
       uses: actions/upload-artifact@v4
       with:
