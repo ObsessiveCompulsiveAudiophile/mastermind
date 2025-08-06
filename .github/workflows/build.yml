@@ -1,0 +1,111 @@
+name: Build Mastermind Programs for Windows and Linux
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # --- JOB 1: Build for Windows ---
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install CUDA Toolkit
+      uses: Jimver/cuda-toolkit@v0.2.11
+      with:
+        cuda: '11.8.0'
+        method: 'network'
+
+    - name: Verify CUDA Installation
+      run: |
+        nvcc --version
+        nvidia-smi
+      shell: cmd
+
+    - name: Set up Visual Studio Shell
+      uses: microsoft/setup-msbuild@v2
+      with:
+        msbuild-architecture: x64
+
+    - name: Build CUDA Optimizer
+      run: |
+        "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin\nvcc" ^
+        -O2 ^
+        -std=c++17 ^
+        -use_fast_math ^
+        -gencode arch=compute_61,code=sm_61 ^
+        -gencode arch=compute_75,code=sm_75 ^
+        -gencode arch=compute_86,code=sm_86 ^
+        kernel.cu -o stageWeightsOptimizer.exe
+      shell: cmd
+
+    - name: Build CPU Tree Generator 1
+      run: |
+        cl.exe /EHsc /O2 /std:c++17 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights.exe
+      shell: cmd
+
+    - name: Build CPU Tree Generator 2
+      run: |
+        cl.exe /EHsc /O2 /std:c++17 treeGenStageWeights.cpp /Fe:treeGenStageWeights.exe
+      shell: cmd
+
+    - name: Upload Windows Executables
+      uses: actions/upload-artifact@v4
+      with:
+        name: mastermind-windows-binaries
+        path: |
+          stageWeightsOptimizer.exe
+          treeGenFixedWeights.exe
+          treeGenStageWeights.exe
+
+  # --- JOB 2: Build for Linux ---
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install CUDA Toolkit and g++
+      uses: Jimver/cuda-toolkit@v0.2.11
+      with:
+        cuda: '11.8.0'
+    - run: |
+        sudo apt-get update
+        sudo apt-get install -y g++
+
+    - name: Verify CUDA Installation
+      run: |
+        /usr/local/cuda-11.8/bin/nvcc --version
+        nvidia-smi
+
+    - name: Build CUDA Optimizer
+      run: |
+        /usr/local/cuda-11.8/bin/nvcc \
+        -O2 \
+        -std=c++17 \
+        -use_fast_math \
+        -gencode arch=compute_61,code=sm_61 \
+        -gencode arch=compute_75,code=sm_75 \
+        -gencode arch=compute_86,code=sm_86 \
+        kernel.cu -o stageWeightsOptimizer_linux
+
+    - name: Build CPU Tree Generator 1
+      run: |
+        g++ -O2 -std=c++17 treeGenFixedWeights.cpp -o treeGenFixedWeights
+
+    - name: Build CPU Tree Generator 2
+      run: |
+        g++ -O2 -std=c++17 treeGenStageWeights.cpp -o treeGenStageWeights
+
+    - name: Upload Linux Executables
+      uses: actions/upload-artifact@v4
+      with:
+        name: mastermind-linux-binaries
+        path: |
+          stageWeightsOptimizer_linux
+          treeGenFixedWeights
+          treeGenStageWeights
