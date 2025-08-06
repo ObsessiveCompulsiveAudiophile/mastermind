@@ -1,113 +1,112 @@
-name: Build Mastermind Programs for Windows and Linux
+name: Build Mastermind
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ main, master ]
+  release:
+    types: [ published ]
 
 jobs:
-  # --- JOB 1: Build for Windows ---
-  build-windows:
-    runs-on: windows-latest
+  build-linux:
+    runs-on: ubuntu-latest
+    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install MSYS2 and g++
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: MINGW64
-        update: true
-        install: mingw-w64-x86_64-gcc
-
+    - uses: actions/checkout@v4
+    
     - name: Install CUDA Toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '11.8.0'
+        cuda: '12.2'
         method: 'network'
-
-    - name: Verify CUDA Installation
+    
+    - name: Install build dependencies
       run: |
-        nvcc --version
-        nvidia-smi
-      shell: cmd
-
-    - name: Build CUDA Optimizer
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+    
+    - name: Compile CUDA program
       run: |
-        "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin\nvcc" ^
-        -O2 ^
-        -std=c++17 ^
-        -use_fast_math ^
-        -gencode arch=compute_61,code=sm_61 ^
-        -gencode arch=compute_75,code=sm_75 ^
-        -gencode arch=compute_86,code=sm_86 ^
-        kernel.cu -o stageWeightsOptimizer.exe
-      shell: cmd
-
-    - name: Build CPU Tree Generator 1
+        nvcc -o mastermind_cuda_linux kernel.cu
+    
+    - name: Compile C++ programs
       run: |
-        g++ -O2 -std=c++17 treeGenFixedWeights.cpp -o treeGenFixedWeights.exe
-      shell: msys2 {0}
-
-    - name: Build CPU Tree Generator 2
-      run: |
-        g++ -O2 -std=c++17 treeGenStageWeights.cpp -o treeGenStageWeights.exe
-      shell: msys2 {0}
-
-    - name: Upload Windows Executables
+        g++ -o treeGenFixedWeights_linux treeGenFixedWeights.cpp -std=c++17
+        g++ -o treeGenStageWeights_linux treeGenStageWeights.cpp -std=c++17
+    
+    - name: Upload Linux binaries
       uses: actions/upload-artifact@v4
       with:
-        name: mastermind-windows-binaries
+        name: mastermind-linux
         path: |
-          stageWeightsOptimizer.exe
-          treeGenFixedWeights.exe
-          treeGenStageWeights.exe
+          mastermind_cuda_linux
+          treeGenFixedWeights_linux
+          treeGenStageWeights_linux
 
-  # --- JOB 2: Build for Linux ---
-  build-linux:
-    runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
+    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install CUDA Toolkit and g++
+    - uses: actions/checkout@v4
+    
+    - name: Install CUDA Toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '11.8.0'
-    - run: |
-        sudo apt-get update
-        sudo apt-get install -y g++
-
-    - name: Verify CUDA Installation
+        cuda: '12.2'
+        method: 'network'
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Compile CUDA program
       run: |
-        /usr/local/cuda-11.8/bin/nvcc --version
-        nvidia-smi
-
-    - name: Build CUDA Optimizer
+        nvcc -o mastermind_cuda_windows.exe kernel.cu
+      shell: cmd
+    
+    - name: Compile C++ programs
       run: |
-        /usr/local/cuda-11.8/bin/nvcc \
-        -O2 \
-        -std=c++17 \
-        -use_fast_math \
-        -gencode arch=compute_61,code=sm_61 \
-        -gencode arch=compute_75,code=sm_75 \
-        -gencode arch=compute_86,code=sm_86 \
-        kernel.cu -o stageWeightsOptimizer_linux
-
-    - name: Build CPU Tree Generator 1
-      run: |
-        g++ -O2 -std=c++17 treeGenFixedWeights.cpp -o treeGenFixedWeights
-
-    - name: Build CPU Tree Generator 2
-      run: |
-        g++ -O2 -std=c++17 treeGenStageWeights.cpp -o treeGenStageWeights
-
-    - name: Upload Linux Executables
+        cl /EHsc /std:c++17 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights_windows.exe
+        cl /EHsc /std:c++17 treeGenStageWeights.cpp /Fe:treeGenStageWeights_windows.exe
+      shell: cmd
+    
+    - name: Upload Windows binaries
       uses: actions/upload-artifact@v4
       with:
-        name: mastermind-linux-binaries
+        name: mastermind-windows
         path: |
-          stageWeightsOptimizer_linux
-          treeGenFixedWeights
-          treeGenStageWeights
+          mastermind_cuda_windows.exe
+          treeGenFixedWeights_windows.exe
+          treeGenStageWeights_windows.exe
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: mastermind-linux
+        path: ./linux/
+    
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: mastermind-windows
+        path: ./windows/
+    
+    - name: Create release archives
+      run: |
+        cd linux && tar -czf ../mastermind-linux.tar.gz * && cd ..
+        cd windows && zip -r ../mastermind-windows.zip * && cd ..
+    
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          mastermind-linux.tar.gz
+          mastermind-windows.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
