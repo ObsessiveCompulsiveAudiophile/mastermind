@@ -81,30 +81,20 @@ jobs:
     - name: Setup MSVC environment
       uses: ilammy/msvc-dev-cmd@v1
     
-    - name: Try CUDA installation (with timeout)
+    - name: Install CUDA toolkit
       id: cuda_install_win
-      continue-on-error: true
-      timeout-minutes: 8
       run: |
         # Try chocolatey CUDA installation (faster)
         choco install cuda --version=11.8.0 -y --no-progress --limit-output
         echo "CUDA_INSTALLED=true" >> $env:GITHUB_OUTPUT
     
-    - name: Set CUDA paths (if installed)
-      if: steps.cuda_install_win.outcome == 'success'
+    - name: Set CUDA paths
       run: |
         echo "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin" >> $env:GITHUB_PATH
     
-    - name: Compile CUDA program (if CUDA available)
-      if: steps.cuda_install_win.outcome == 'success'
+    - name: Compile CUDA program
       run: |
         nvcc -o mastermind_cuda_windows.exe kernel.cu
-    
-    - name: Compile CUDA program fallback (CPU-only)
-      if: steps.cuda_install_win.outcome == 'failure'
-      run: |
-        # Create a CPU-only version
-        cl /EHsc /DCPU_ONLY /Tp kernel.cu /Fe:mastermind_cuda_windows.exe /std:c++17
     
     - name: Compile C++ programs
       run: |
