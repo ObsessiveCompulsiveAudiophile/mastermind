@@ -70,7 +70,7 @@ jobs:
           treeGenStageWeights_linux
 
   build-windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     
     steps:
     - uses: actions/checkout@v4
@@ -84,11 +84,10 @@ jobs:
     - name: Try CUDA installation (with timeout)
       id: cuda_install_win
       continue-on-error: true
-      timeout-minutes: 10
+      timeout-minutes: 8
       run: |
-        # Download and install CUDA toolkit
-        Invoke-WebRequest -Uri "https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_522.06_windows.exe" -OutFile "cuda_installer.exe"
-        Start-Process -FilePath "cuda_installer.exe" -ArgumentList "-s nvcc_11.8 cudart_11.8" -Wait -NoNewWindow
+        # Try chocolatey CUDA installation (faster)
+        choco install cuda --version=11.8.0 -y --no-progress --limit-output
         echo "CUDA_INSTALLED=true" >> $env:GITHUB_OUTPUT
     
     - name: Set CUDA paths (if installed)
