@@ -19,7 +19,8 @@ jobs:
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
         cuda: '11.8.0'
-        method: 'network'
+        method: 'local'
+      timeout-minutes: 15
     
     - name: Install build dependencies
       run: |
