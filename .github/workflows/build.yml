@@ -70,48 +70,48 @@ jobs:
           treeGenStageWeights_linux
 
   build-windows:
-  runs-on: windows-2022
-
-  steps:
-  - uses: actions/checkout@v4
-
-  - name: Setup MSVC
-    uses: microsoft/setup-msbuild@v2
-
-  - name: Setup MSVC environment
-    uses: ilammy/msvc-dev-cmd@v1
-
-  - name: Install CUDA toolkit
-    uses: Jimver/cuda-toolkit@v0.2.11
-    with:
-      cuda: '12.6.0'
-      method: 'local'
-
-  - name: Add CUDA to PATH
-    shell: bash
-    run: |
-      echo "$Env:CUDA_PATH\\bin" >> $GITHUB_PATH
-
-  - name: List files
-    run: dir
-
-  - name: Compile CUDA program
-    run: |
-      nvcc -o mastermind_cuda_windows.exe kernel.cu -ccbin "cl.exe" -Xcompiler="/EHsc /O2" -std=c++17
-
-  - name: Compile C++ programs
-    run: |
-      cl /EHsc /std:c++17 /O2 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights_windows.exe
-      cl /EHsc /std:c++17 /O2 treeGenStageWeights.cpp /Fe:treeGenStageWeights_windows.exe
-
-  - name: Upload Windows binaries
-    uses: actions/upload-artifact@v4
-    with:
-      name: mastermind-windows
-      path: |
-        mastermind_cuda_windows.exe
-        treeGenFixedWeights_windows.exe
-        treeGenStageWeights_windows.exe
+    runs-on: windows-2022
+  
+    steps:
+    - uses: actions/checkout@v4
+  
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+  
+    - name: Setup MSVC environment
+      uses: ilammy/msvc-dev-cmd@v1
+  
+    - name: Install CUDA toolkit
+      uses: Jimver/cuda-toolkit@v0.2.11
+      with:
+        cuda: '12.6.0'
+        method: 'local'
+  
+    - name: Add CUDA to PATH
+      shell: bash
+      run: |
+        echo "$Env:CUDA_PATH\\bin" >> $GITHUB_PATH
+  
+    - name: List files
+      run: dir
+  
+    - name: Compile CUDA program
+      run: |
+        nvcc -o mastermind_cuda_windows.exe kernel.cu -ccbin "cl.exe" -Xcompiler="/EHsc /O2" -std=c++17
+  
+    - name: Compile C++ programs
+      run: |
+        cl /EHsc /std:c++17 /O2 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights_windows.exe
+        cl /EHsc /std:c++17 /O2 treeGenStageWeights.cpp /Fe:treeGenStageWeights_windows.exe
+  
+    - name: Upload Windows binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: mastermind-windows
+        path: |
+          mastermind_cuda_windows.exe
+          treeGenFixedWeights_windows.exe
+          treeGenStageWeights_windows.exe
 
   release:
     needs: [build-linux, build-windows]
