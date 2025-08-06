@@ -87,7 +87,7 @@ jobs:
     - name: Compile CUDA program
       shell: cmd
       run: |
-        nvcc -arch=sm_52 -I -o mastermind_cuda_windows.exe kernel.cu
+        nvcc -arch=sm_52 -I "%CUDA_PATH%\include" -o mastermind_cuda_windows.exe kernel.cu
   
     - name: Compile C++ programs
       run: |
