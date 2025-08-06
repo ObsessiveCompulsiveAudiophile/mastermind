@@ -77,7 +77,6 @@ jobs:
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
         method: network
-        sub-packages: '["nvcc", "headers"]'
   
     - name: Check CUDA install
       run: |
