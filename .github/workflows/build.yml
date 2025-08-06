@@ -18,7 +18,7 @@ jobs:
     - name: Install CUDA Toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '12.2'
+        cuda: '12.6.0'
         method: 'network'
     
     - name: Install build dependencies
@@ -53,7 +53,7 @@ jobs:
     - name: Install CUDA Toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '12.2'
+        cuda: '11.8.0'
         method: 'network'
     
     - name: Setup MSVC
