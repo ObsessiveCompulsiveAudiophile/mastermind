@@ -81,23 +81,22 @@ jobs:
     - name: Setup MSVC environment
       uses: ilammy/msvc-dev-cmd@v1
   
-    - name: Install CUDA toolkit
+    - name: Install CUDA Toolkit (nvcc only)
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '12.9.1'
-        method: 'local'
+        method: network
+        sub-packages: '["nvcc"]'
   
-    - name: Add CUDA to PATH
-      shell: bash
+    - name: Check CUDA install
       run: |
-        echo "$Env:CUDA_PATH\\bin" >> $GITHUB_PATH
-  
-    - name: List files
-      run: dir
+        echo CUDA_PATH is: $Env:CUDA_PATH
+        nvcc --version
   
     - name: Compile CUDA program
+      shell: cmd
       run: |
-        nvcc -o mastermind_cuda_windows.exe kernel.cu -ccbin "cl.exe" -Xcompiler="/EHsc /O2" -std=c++17
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        nvcc -arch=sm_52 -o mastermind_cuda_windows.exe kernel.cu
   
     - name: Compile C++ programs
       run: |
@@ -112,7 +111,6 @@ jobs:
           mastermind_cuda_windows.exe
           treeGenFixedWeights_windows.exe
           treeGenStageWeights_windows.exe
-
   release:
     needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
