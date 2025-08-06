@@ -89,7 +89,7 @@ jobs:
     
     - name: Compile CUDA program
       run: |
-        nvcc -o mastermind_cuda_windows.exe kernel.cu
+        nvcc -allow-unsupported-compiler -o mastermind_cuda_windows.exe kernel.cu
     
     - name: Compile C++ programs
       run: |
