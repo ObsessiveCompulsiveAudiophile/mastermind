@@ -59,16 +59,17 @@ jobs:
     - name: Setup MSVC
       uses: microsoft/setup-msbuild@v2
     
+    - name: Setup MSVC environment
+      uses: ilammy/msvc-dev-cmd@v1
+    
     - name: Compile CUDA program
       run: |
         nvcc -o mastermind_cuda_windows.exe kernel.cu
-      shell: cmd
     
     - name: Compile C++ programs
       run: |
         cl /EHsc /std:c++17 treeGenFixedWeights.cpp /Fe:treeGenFixedWeights_windows.exe
         cl /EHsc /std:c++17 treeGenStageWeights.cpp /Fe:treeGenStageWeights_windows.exe
-      shell: cmd
     
     - name: Upload Windows binaries
       uses: actions/upload-artifact@v4
