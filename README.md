@@ -1,11 +1,11 @@
 # Mastermind: Weighted Entropy Heuristic Implementations
 
-This repository contains three standalone programs implementing a weighted entropy-based heuristic for the Mastermind game, achieving an expected number of guesses below 3.573:
+This repository contains three standalone programs implementing a weighted entropy-based heuristic for the Mastermind game, achieving an average number of guesses 4.3488:
 - `kernel.cu`: CUDA-accelerated optimizer for computing stage-based weights, optimized for NVIDIA GPUs.
-- `treeGenFixedWeights.cpp`: CPU-based program generating a decision tree using fixed weights.
-- `treeGenStageWeights.cpp`: CPU-based program generating a decision tree using stage-based weights.
+- `treeGenFixedWeights.cpp`: CPU-based program generating a full game tree using fixed weights.
+- `treeGenStageWeights.cpp`: CPU-based program generating a full game tree using stage-based weights.
 
-See the [paper](link-to-your-latex-paper) for details on the heuristic and its performance.
+See author's paper for details on the heuristic and its performance.
 
 ## Prerequisites
 - **Windows**:
@@ -22,5 +22,5 @@ See the [paper](link-to-your-latex-paper) for details on the heuristic and its p
 ### Windows
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/mastermind.git
+   git clone https://github.com/obsessivecompulsiveaudiophile/mastermind.git
    cd mastermind
