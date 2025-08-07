@@ -81,10 +81,10 @@ jobs:
     - name: Setup MSVC environment
       uses: ilammy/msvc-dev-cmd@v1
   
-    - name: Install CUDA Toolkit (nvcc only)
+    - name: Install CUDA Toolkit
       uses: Jimver/cuda-toolkit@v0.2.11
       with:
-        cuda: '12.4.0'
+        cuda: '12.3.2'
         method: network
   
     - name: Check CUDA install
