@@ -28,12 +28,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential
     
-    - name: Try CUDA installation (with fallback)
+    - name: CUDA installation
       id: cuda_install
       continue-on-error: true
       timeout-minutes: 10
       run: |
-        # Try to install CUDA toolkit
+        # Install CUDA toolkit
         wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
         sudo sh cuda_11.8.0_520.61.05_linux.run --silent --toolkit --no-opengl-libs --no-drm
         echo "CUDA_INSTALLED=true" >> $GITHUB_OUTPUT
@@ -44,16 +44,10 @@ jobs:
         echo "/usr/local/cuda/bin" >> $GITHUB_PATH
         echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH" >> $GITHUB_ENV
     
-    - name: Compile CUDA program (if CUDA available)
+    - name: Compile CUDA program
       if: steps.cuda_install.outcome == 'success'
       run: |
         nvcc -o mastermind_cuda_linux kernel.cu
-    
-    - name: Compile CUDA program fallback (CPU-only)
-      if: steps.cuda_install.outcome == 'failure'
-      run: |
-        # Create a CPU-only version by compiling as regular C++
-        g++ -DCPU_ONLY -x c++ -o mastermind_cuda_linux kernel.cu -std=c++17
     
     - name: Compile C++ programs
       run: |
