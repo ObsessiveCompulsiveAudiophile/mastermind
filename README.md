@@ -1,6 +1,6 @@
 # Mastermind: Weighted-Entropy Heuristic Implementations
 
-This repository contains three standalone programs that implement a **weighted-entropy heuristic** for the classic *Mastermind* game, achieving an average of **4.3488 guesses per game**.
+This repository contains three standalone programs that implement a **weighted-entropy heuristic** for the classic *Mastermind* game, achieving an average of **4.3488** guesses for the full game set.
 
 | Program | Purpose | Hardware |
 |---------|---------|----------|
