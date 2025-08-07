@@ -81,11 +81,15 @@ jobs:
     - name: Setup MSVC environment
       uses: ilammy/msvc-dev-cmd@v1
   
-    - name: Install CUDA Toolkit
-      uses: Jimver/cuda-toolkit@v0.2.11
-      with:
-        cuda: '12.3.2'
-        method: network
+    - name: Install CUDA 12.4.0 (powershell)
+      shell: powershell
+      run: |
+        curl -L -o cuda.exe `
+        https://developer.download.nvidia.com/compute/cuda/12.4.0/network_installers/cuda_12.4.0_windows_network.exe
+          Start-Process -Wait -FilePath .\cuda.exe -ArgumentList `
+          "-s nvcc_12.4 cudart_12.4 cuobjdump_12.4 nvprune_12.4"
+        echo "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin" >> $env:GITHUB_PATH
+        echo "CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4" >> $env:GITHUB_ENV
   
     - name: Check CUDA install
       run: |
